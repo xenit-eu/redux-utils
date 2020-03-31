@@ -1,12 +1,21 @@
 {
+  "name": "@xenit/redux-utils",
   "version": "0.1.0",
   "license": "LGPL-3.0-or-later",
+  "author": {
+    "name": "Xenit",
+    "url": "https://xenit.eu/"
+  },
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
+  "module": "dist/redux-utils.esm.js",
   "files": [
     "dist",
     "src"
   ],
+  "publishConfig": {
+      "access": "public"
+  },
   "engines": {
     "node": ">=10"
   },
@@ -30,12 +39,6 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "@xenit/redux-utils",
-  "author": {
-    "name": "Xenit",
-    "url": "https://xenit.eu/"
-  },
-  "module": "dist/redux-utils.esm.js",
   "devDependencies": {
     "@types/jest": "^25.1.4",
     "husky": "^4.2.3",
