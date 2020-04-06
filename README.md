@@ -17,6 +17,20 @@ const selectedDocumentReducer = createAsyncReducer(
 )
 ```
 
+### `withTypedPayload<T>()`
+
+Creates an action payload creator with a certain type to be used with [RTK `createAction`](https://redux-toolkit.js.org/api/createAction)
+
+```typescript
+
+interface ISomeActionPayload {
+    someValue1: string;
+    someValue2: number;
+}
+
+const action = createAction("action/named", withTypedPayload<ISomeActionPayload>());
+
+```
 
 ## Local Development
 
