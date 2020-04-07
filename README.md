@@ -14,6 +14,9 @@ const selectedDocumentReducer = createAsyncReducer(
     null as IDocument | null, // Initial state
     selectDocument, // Return value of createAsyncThunk
     (state, action) => action.payload, // Reducer in case of success (defaults to replacing the state with the payload)
+    (builder) => {
+        // Add additional reducers here. These reducers handle the full state created by `createAsyncReducer`
+    }
 )
 ```
 
