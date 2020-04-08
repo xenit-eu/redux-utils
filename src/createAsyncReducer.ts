@@ -5,6 +5,7 @@ import {
     SerializedError,
     ActionCreatorWithPreparedPayload,
     Dispatch,
+    ActionReducerMapBuilder,
 } from '@reduxjs/toolkit';
 import {
     WithRequestIdState,
@@ -113,10 +114,13 @@ export default function createAsyncReducer<
 >(
     initialState: S | undefined,
     asyncThunkAction: AsyncThunkReturn<Returned, ThunkArg, ThunkApiConfig>,
-    reducer: Reducer<
+    reducer?: Reducer<
         S | undefined,
         AsyncThunkAction<Returned, ThunkArg, ThunkApiConfig, 'fulfilled'>
-    >
+    >,
+    additionalReducers?: (
+        builder: ActionReducerMapBuilder<WithRequestIdState<S, ThunkApiConfig>>
+    ) => void
 ): Reducer<
     WithRequestIdState<S, ThunkApiConfig>,
     AllAsyncThunkActions<Returned, ThunkArg, ThunkApiConfig>
@@ -167,14 +171,17 @@ export default function createAsyncReducer<
     reducer: Reducer<
         S,
         AsyncThunkAction<Returned, ThunkArg, ThunkApiConfig, 'fulfilled'>
-    > = (_state, action) => (action.payload as unknown) as S
+    > = (_state, action) => (action.payload as unknown) as S,
+    additionalReducers: (
+        builder: ActionReducerMapBuilder<WithRequestIdState<S, ThunkApiConfig>>
+    ) => void = () => {}
 ): Reducer<
     WithRequestIdState<S, ThunkApiConfig>,
     AllAsyncThunkActions<Returned, ThunkArg, ThunkApiConfig>
 > {
     return createReducer(
         withRequestId<S, ThunkApiConfig>(initialState),
-        builder =>
+        builder => {
             builder
                 .addCase(asyncThunkAction.pending, storeRequestId())
                 .addCase(asyncThunkAction.rejected, (state, action) => {
@@ -184,6 +191,8 @@ export default function createAsyncReducer<
                 .addCase(
                     asyncThunkAction.fulfilled,
                     validateRequestIdSuccess(reducer)
-                )
+                );
+            additionalReducers(builder);
+        }
     );
 }

@@ -3,6 +3,7 @@ import {
     createAsyncThunk,
     configureStore,
     SerializedError,
+    createAction,
 } from '@reduxjs/toolkit';
 
 function setUp() {
@@ -154,6 +155,57 @@ describe('createAsyncReducer', () => {
 
         expect(store.getState()).toEqual({
             data: 'some-id',
+            isLoading: false,
+            requestError: null,
+            requestId: null,
+        });
+    });
+    it('Can be created with additional reducers', async () => {
+        const clearAction = createAction('clear');
+
+        const { asyncActions } = setUp();
+
+        const reducer = createAsyncReducer<
+            string | { id: string },
+            { id: string },
+            string,
+            { rejectValue: { error: string } }
+        >(undefined, asyncActions, undefined, builder => {
+            builder.addCase(clearAction, () => ({
+                data: 'cleared',
+                isLoading: false,
+                requestError: null,
+                requestId: null,
+            }));
+        });
+
+        const store = configureStore({ reducer });
+
+        const dispatchPromise = store.dispatch(asyncActions('some-id'));
+
+        const { requestId, ...state } = store.getState();
+
+        expect(state).toEqual({
+            data: undefined,
+            isLoading: true,
+            requestError: null,
+        });
+
+        await dispatchPromise.then(result =>
+            expect(result.meta.requestId).toEqual(requestId)
+        );
+
+        expect(store.getState()).toEqual({
+            data: { id: 'some-id' },
+            isLoading: false,
+            requestError: null,
+            requestId: null,
+        });
+
+        store.dispatch(clearAction());
+
+        expect(store.getState()).toEqual({
+            data: 'cleared',
             isLoading: false,
             requestError: null,
             requestId: null,
