@@ -4,7 +4,9 @@ Utilities for working with [Redux](https://redux.js.org/) (extensions on top of 
 
 ## Functions
 
-### `createAsyncReducer`
+### Redux Toolkit extensions
+
+#### `createAsyncReducer`
 
 Creates a standard set of reducers for [RTK `createAsyncThunk`](https://redux-toolkit.js.org/api/createAsyncThunk) that only handles a single object at a time.
 
@@ -20,7 +22,7 @@ const selectedDocumentReducer = createAsyncReducer(
 )
 ```
 
-### `withTypedPayload<T>()`
+#### `withTypedPayload<T>()`
 
 Creates an action payload creator with a certain type to be used with [RTK `createAction`](https://redux-toolkit.js.org/api/createAction)
 
@@ -33,6 +35,38 @@ interface ISomeActionPayload {
 
 const action = createAction("action/named", withTypedPayload<ISomeActionPayload>());
 
+```
+
+### Store watcher
+
+The store watcher allows subscribing to changes in a slice of the redux state.
+
+#### `createWatcher`
+
+Creates a watcher for a slice of store state.
+
+```typescript
+// Create a watcher
+const selectedDocumentWatcher = createWatcher(selectedDocument, (newDocument, previousDocument) => {
+    // Do something with the changed state
+});
+
+// Subscribe the watcher to the store
+const unsubscribe = selectedDocumentWatcher(store);
+
+// Unsubscribe the watcher from the store
+unsubscribe();
+```
+
+#### `combineWatchers`
+
+Combines a list of watchers into one. Similar to [`combineReducers`](https://redux.js.org/api/combinereducers/)
+
+```typescript
+// Combine a bunch of watchers into one watcher that can be subscribed to the store.
+const watcher = combineWatchers(someWatcher, someOtherWatcher, aThirdWatcher);
+
+watcher(store);
 ```
 
 ## Local Development
