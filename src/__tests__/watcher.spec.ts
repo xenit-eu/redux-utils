@@ -65,12 +65,20 @@ describe('createWatcher', () => {
         store.dispatch(increment());
 
         expect(changeHandler).toHaveBeenCalledTimes(1);
-        expect(changeHandler).toHaveBeenLastCalledWith(1, 0);
+        expect(changeHandler).toHaveBeenLastCalledWith(
+            1,
+            0,
+            jasmine.anything()
+        );
 
         store.dispatch(increment());
 
         expect(changeHandler).toHaveBeenCalledTimes(2);
-        expect(changeHandler).toHaveBeenLastCalledWith(2, 1);
+        expect(changeHandler).toHaveBeenLastCalledWith(
+            2,
+            1,
+            jasmine.anything()
+        );
     });
 
     it('Does not respond when the watched slice does not change', () => {
@@ -135,6 +143,19 @@ describe('createWatcher', () => {
 
         expect(changeHandler).toHaveBeenCalledTimes(1);
     });
+
+    it('Passes extra options to the change listener', () => {
+        const { store, counterSelector, increment } = setUp();
+
+        const changeHandler = jest.fn();
+        const watcher = createWatcher(counterSelector, changeHandler);
+        watcher(store);
+
+        store.dispatch(increment());
+
+        expect(changeHandler.mock.calls[0][2]).toHaveProperty('dispatch');
+        expect(changeHandler.mock.calls[0][2].store).toBe(store);
+    });
 });
 
 describe('combineWatchers', () => {
@@ -160,12 +181,12 @@ describe('combineWatchers', () => {
         store.dispatch(increment());
 
         expect(counterChange).toHaveBeenCalledTimes(1);
-        expect(counterChange).toHaveBeenCalledWith(1, 0);
+        expect(counterChange).toHaveBeenCalledWith(1, 0, jasmine.anything());
         expect(letterChange).not.toHaveBeenCalled();
 
         store.dispatch(nextLetter());
         expect(letterChange).toHaveBeenCalledTimes(1);
-        expect(letterChange).toHaveBeenCalledWith('b', 'a');
+        expect(letterChange).toHaveBeenCalledWith('b', 'a', jasmine.anything());
     });
 
     it('Unsubscribes multiple watchers from the store', () => {

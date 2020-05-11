@@ -1,14 +1,14 @@
-import { Store, Selector, Unsubscribe } from '@reduxjs/toolkit';
+import { Store, Selector, Unsubscribe, Dispatch } from '@reduxjs/toolkit';
 import invariant from 'tiny-invariant';
 
-type ChangeHandler<T> = (newValue: T, oldValue: T) => void;
+type SimpleChangeListener<T> = (newValue: T, oldValue: T) => void;
 
 // Copied and simplified from https://github.com/jprichardson/redux-watch/blob/master/index.js
 function watch<R>(
     getState: () => R
-): (handler: ChangeHandler<R>) => () => void {
+): (handler: SimpleChangeListener<R>) => () => void {
     let currentValue = getState();
-    return (handler: ChangeHandler<R>) => () => {
+    return (handler: SimpleChangeListener<R>) => () => {
         let newValue = getState();
         if (currentValue !== newValue) {
             let oldValue = currentValue;
@@ -17,6 +17,33 @@ function watch<R>(
         }
     };
 }
+
+/**
+ * Extra data for a change listener
+ */
+interface ChangeListenerExtra<S extends Store> {
+    /**
+     * The store on which the change listerner was triggered
+     */
+    store: S;
+    /**
+     * Dispatch method of the store
+     */
+    dispatch: Dispatch;
+}
+
+/**
+ * A change listener.
+ *
+ * @param newValue The new value that is now in the store
+ * @param oldValue The previous value that was in the store
+ * @param extra Additional data for the change listener
+ */
+type ChangeListener<T, S extends Store> = (
+    newValue: T,
+    oldValue: T,
+    extra: ChangeListenerExtra<S>
+) => void;
 
 /**
  * An unbound watcher for a slice of store state
@@ -30,13 +57,13 @@ type StoreWatcher<S extends Store> = (store: S) => Unsubscribe;
  * Creates a 'watcher' for a slice of the store
  *
  * @param selector Selector function that selects a slice of the state of the store
- * @param handler Change handler that will be called when the slice changes
+ * @param listener Change listener that will be called when the slice changes
  *
  * @returns An unbound watcher for the state returned by selector
  */
 export function createWatcher<State, R, S extends Store<State> = Store<State>>(
     selector: Selector<State, R>,
-    handler: ChangeHandler<R>
+    listener: ChangeListener<R, S>
 ): StoreWatcher<S> {
     let registered = false;
     return store => {
@@ -45,7 +72,15 @@ export function createWatcher<State, R, S extends Store<State> = Store<State>>(
             'A watcher can only be subscribed to the store once.'
         );
         const watcher = watch(() => selector(store.getState()));
-        const unsubscribe = store.subscribe(watcher(handler));
+        const opts: ChangeListenerExtra<S> = {
+            store: store,
+            dispatch: store.dispatch.bind(store),
+        };
+        const unsubscribe = store.subscribe(
+            watcher((newValue, oldValue) => {
+                listener(newValue, oldValue, opts);
+            })
+        );
         registered = true;
         return () => {
             unsubscribe();

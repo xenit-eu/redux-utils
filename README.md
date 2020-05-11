@@ -47,7 +47,7 @@ Creates a watcher for a slice of store state.
 
 ```typescript
 // Create a watcher
-const selectedDocumentWatcher = createWatcher(selectedDocument, (newDocument, previousDocument) => {
+const selectedDocumentWatcher = createWatcher(selectedDocument, (newDocument, previousDocument, { dispatch, store }) => {
     // Do something with the changed state
 });
 
