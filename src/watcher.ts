@@ -1,5 +1,9 @@
 import { Store, Selector, Unsubscribe, Dispatch } from '@reduxjs/toolkit';
 import invariant from 'tiny-invariant';
+import debug from 'debug';
+import StacktraceJs from 'stacktrace-js';
+
+const log = debug('redux-utils:watcher');
 
 type SimpleChangeListener<T> = (newValue: T, oldValue: T) => void;
 
@@ -66,6 +70,11 @@ export function createWatcher<State, R, S extends Store<State> = Store<State>>(
     listener: ChangeListener<R, S>
 ): StoreWatcher<S> {
     let registered = false;
+    let caller = '<unknown>';
+    if (log.enabled) {
+        const backtrace = StacktraceJs.getSync();
+        caller = backtrace[1].toString();
+    }
     return store => {
         invariant(
             !registered,
@@ -78,6 +87,13 @@ export function createWatcher<State, R, S extends Store<State> = Store<State>>(
         };
         const unsubscribe = store.subscribe(
             watcher((newValue, oldValue) => {
+                log(
+                    'Watcher [created by %s] (selector=%O) changed: %O => %O',
+                    caller,
+                    selector,
+                    oldValue,
+                    newValue
+                );
                 listener(newValue, oldValue, opts);
             })
         );
