@@ -115,16 +115,26 @@ describe('createWatcher', () => {
         expect(changeHandler).toHaveBeenCalledTimes(1);
     });
 
-    it('Can only be subscribed to the store once', () => {
-        const { store, counterSelector } = setUp();
+    it('Can be subscribed to multiple stores', () => {
+        const { store, counterSelector, increment } = setUp();
+        const { store: store2, increment: increment2 } = setUp();
 
         const changeHandler = jest.fn();
 
         const watcher = createWatcher(counterSelector, changeHandler);
 
         watcher(store);
+        watcher(store2);
 
-        expect(() => watcher(store)).toThrowError();
+        store.dispatch(increment());
+
+        expect(changeHandler).toHaveBeenCalledTimes(1);
+        expect(changeHandler.mock.calls[0][2].store).toBe(store);
+
+        store2.dispatch(increment2());
+
+        expect(changeHandler).toHaveBeenCalledTimes(2);
+        expect(changeHandler.mock.calls[1][2].store).toBe(store2);
     });
 
     it('Can be subscribed again after it has been unsubscribed', () => {
