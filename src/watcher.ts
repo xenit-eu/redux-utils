@@ -24,7 +24,7 @@ function watch<R>(
 /**
  * Extra data for a change listener
  */
-interface ChangeListenerExtra<S extends Store> {
+interface ChangeListenerExtra<S extends Store, D extends Dispatch = Dispatch> {
     /**
      * The store on which the change listerner was triggered
      */
@@ -32,7 +32,7 @@ interface ChangeListenerExtra<S extends Store> {
     /**
      * Dispatch method of the store
      */
-    dispatch: Dispatch;
+    dispatch: D;
 }
 
 /**
@@ -42,10 +42,10 @@ interface ChangeListenerExtra<S extends Store> {
  * @param oldValue The previous value that was in the store
  * @param extra Additional data for the change listener
  */
-type ChangeListener<T, S extends Store> = (
+type ChangeListener<T, S extends Store, D extends Dispatch = Dispatch> = (
     newValue: T,
     oldValue: T,
-    extra: ChangeListenerExtra<S>
+    extra: ChangeListenerExtra<S, D>
 ) => void;
 
 /**
@@ -64,9 +64,14 @@ type StoreWatcher<S extends Store> = (store: S) => Unsubscribe;
  *
  * @returns An unbound watcher for the state returned by selector
  */
-export function createWatcher<State, R, S extends Store<State> = Store<State>>(
+export function createWatcher<
+    State,
+    R,
+    S extends Store<State> = Store<State>,
+    D extends Dispatch = Dispatch
+>(
     selector: Selector<State, R>,
-    listener: ChangeListener<R, S>
+    listener: ChangeListener<R, S, D>
 ): StoreWatcher<S> {
     let caller = '<unknown>';
     if (log.enabled) {
@@ -75,9 +80,9 @@ export function createWatcher<State, R, S extends Store<State> = Store<State>>(
     }
     return store => {
         const watcher = watch(() => selector(store.getState()));
-        const opts: ChangeListenerExtra<S> = {
+        const opts: ChangeListenerExtra<S, D> = {
             store: store,
-            dispatch: store.dispatch.bind(store),
+            dispatch: store.dispatch.bind(store) as D,
         };
         return store.subscribe(
             watcher((newValue, oldValue) => {
