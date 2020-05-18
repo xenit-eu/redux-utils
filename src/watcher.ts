@@ -1,5 +1,4 @@
 import { Store, Selector, Unsubscribe, Dispatch } from '@reduxjs/toolkit';
-import invariant from 'tiny-invariant';
 import debug from 'debug';
 import StacktraceJs from 'stacktrace-js';
 
@@ -69,23 +68,18 @@ export function createWatcher<State, R, S extends Store<State> = Store<State>>(
     selector: Selector<State, R>,
     listener: ChangeListener<R, S>
 ): StoreWatcher<S> {
-    let registered = false;
     let caller = '<unknown>';
     if (log.enabled) {
         const backtrace = StacktraceJs.getSync();
         caller = backtrace[1].toString();
     }
     return store => {
-        invariant(
-            !registered,
-            'A watcher can only be subscribed to the store once.'
-        );
         const watcher = watch(() => selector(store.getState()));
         const opts: ChangeListenerExtra<S> = {
             store: store,
             dispatch: store.dispatch.bind(store),
         };
-        const unsubscribe = store.subscribe(
+        return store.subscribe(
             watcher((newValue, oldValue) => {
                 log(
                     'Watcher [created by %s] (selector=%O) changed: %O => %O',
@@ -97,11 +91,6 @@ export function createWatcher<State, R, S extends Store<State> = Store<State>>(
                 listener(newValue, oldValue, opts);
             })
         );
-        registered = true;
-        return () => {
-            unsubscribe();
-            registered = false;
-        };
     };
 }
 
